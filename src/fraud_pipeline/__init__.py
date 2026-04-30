@@ -1,0 +1,2 @@
+"""Fraud detection project pipeline."""
+
