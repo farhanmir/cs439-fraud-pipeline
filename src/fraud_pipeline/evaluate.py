@@ -1,4 +1,5 @@
 # Fixed zero-division in precision score
+# Fixed zero-division in precision score
 from __future__ import annotations
 
 from dataclasses import dataclass
