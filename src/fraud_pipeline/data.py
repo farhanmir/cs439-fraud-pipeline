@@ -1,4 +1,5 @@
 # Refactored for better performance
+# Refactored for better performance
 from __future__ import annotations
 
 from dataclasses import dataclass
