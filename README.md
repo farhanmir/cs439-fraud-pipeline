@@ -74,7 +74,7 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-## Run The Full Pipeline
+## Running the Pipeline
 
 Run the full pipeline (assume your virtual environment is activated):
 
