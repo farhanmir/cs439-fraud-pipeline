@@ -61,6 +61,14 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    print(
+        "NOTE: This tuning script applies SMOTE oversampling inside each CV fold.\n"
+        "The best hyperparameters are selected under a SMOTE-augmented distribution.\n"
+        "The main pipeline (run_pipeline.py) does NOT use SMOTE — it uses\n"
+        "scale_pos_weight for imbalance correction instead. Hyperparameters\n"
+        "transferred from this script to models.py may behave differently under\n"
+        "the real training distribution."
+    )
     cfg = PipelineConfig(
         data_path=Path(args.data),
         random_state=args.random_state,
@@ -91,7 +99,10 @@ def main() -> None:
         objective="binary:logistic", tree_method="hist", use_label_encoder=False
     )
 
-    # Build an imblearn Pipeline so scaling and SMOTE happen inside CV folds (no leakage)
+    # SMOTE is applied inside each CV fold here for hyperparameter search only.
+    # The final model in models.py does NOT use SMOTE; it uses scale_pos_weight.
+    # This means selected hyperparameters were optimised under a different
+    # class distribution than the one used at inference time.
     pipeline = ImbPipeline(
         steps=[
             ("scaler", StandardScaler()),
@@ -136,6 +147,7 @@ def main() -> None:
             {
                 "best_score": float(search.best_score_),
                 "best_params": search.best_params_,
+                "smote_used_in_cv": True,
             },
             indent=2,
         )

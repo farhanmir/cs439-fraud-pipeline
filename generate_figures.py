@@ -14,6 +14,7 @@ reconstruct the processed test-feature matrix needed for SHAP and PCA.
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -45,7 +46,6 @@ except ImportError:
 from fraud_pipeline.config import PipelineConfig
 from fraud_pipeline.data import prepare_data
 from fraud_pipeline.models import build_hybrid_features
-from fraud_pipeline.plots import clean_feature_names
 from fraud_pipeline.utils import to_dense
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -159,10 +159,9 @@ print("Features and model ready.")
 # ══════════════════════════════════════════════════════════════════════════════
 # Figure 3 — SHAP Summary Plot
 # ══════════════════════════════════════════════════════════════════════════════
-feature_names = [
-    *clean_feature_names(prepared.feature_names),
-    "anomaly_score",
-    "anomaly_flag",
+feature_names = [*prepared.feature_names, "anomaly_score", "anomaly_flag"]
+feature_names_clean = [
+    re.sub(r"^(num__|cat__)", "", name) for name in feature_names
 ]
 X_aug = hybrid_feats.x_test_augmented
 
@@ -180,7 +179,7 @@ if HAS_SHAP:
     shap.summary_plot(
         shap_values,
         features=X_shap,
-        feature_names=feature_names,
+        feature_names=feature_names_clean,
         max_display=15,
         show=False,
     )
