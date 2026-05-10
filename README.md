@@ -222,8 +222,3 @@ python scripts/tune_xgboost.py --data creditcard.csv --output-dir artifacts --tr
 
 The tuner is deterministic by default (passes `--random-state 42`) so results are reproducible across runs.
 
-## Running the Pipeline
-To run the full pipeline, use `python run_pipeline.py`.
-
-## Running the Pipeline
-To run the full pipeline, use `python run_pipeline.py`.
