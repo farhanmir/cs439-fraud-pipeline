@@ -80,8 +80,8 @@ def train_logistic_regression(
     return model
 
 
-def train_hybrid_xgboost(
-    x_train_augmented: np.ndarray,
+def train_xgboost(
+    X_train: object,
     y_train: object,
     random_state: int,
 ) -> object:
@@ -114,8 +114,16 @@ def train_hybrid_xgboost(
             random_state=random_state,
             n_jobs=1,
         )
-    model.fit(x_train_augmented, y_train)
+    model.fit(X_train, y_train)
     return model
+
+
+def train_hybrid_xgboost(
+    x_train_augmented: np.ndarray,
+    y_train: object,
+    random_state: int,
+) -> object:
+    return train_xgboost(x_train_augmented, y_train, random_state)
 
 
 def get_hybrid_model_label(model: object) -> str:

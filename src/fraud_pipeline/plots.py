@@ -28,6 +28,13 @@ except ImportError as exc:  # pragma: no cover
     HAS_SHAP = False
 
 
+def clean_feature_names(feature_names: list[str]) -> list[str]:
+    return [
+        name.removeprefix("num__").removeprefix("cat__")
+        for name in feature_names
+    ]
+
+
 def save_confusion_matrix_plot(evaluation: ModelEvaluation, output_path: Path) -> None:
     matrix = np.asarray(evaluation.confusion_matrix)
     fig, ax = plt.subplots(figsize=(5, 4))
@@ -233,7 +240,11 @@ def save_shap_summary_plot(
     sample_size: int,
     max_display: int = 20,
 ) -> pd.DataFrame:
-    shap_feature_names = [*feature_names, "anomaly_score", "anomaly_flag"]
+    shap_feature_names = [
+        *clean_feature_names(feature_names),
+        "anomaly_score",
+        "anomaly_flag",
+    ]
     if len(X_test_augmented) > sample_size:
         rng = np.random.default_rng(random_state)
         sample_idx = rng.choice(len(X_test_augmented), size=sample_size, replace=False)
@@ -282,7 +293,11 @@ def save_fallback_explainability_plot(
     sample_size: int,
     max_display: int = 20,
 ) -> pd.DataFrame:
-    shap_feature_names = [*feature_names, "anomaly_score", "anomaly_flag"]
+    shap_feature_names = [
+        *clean_feature_names(feature_names),
+        "anomaly_score",
+        "anomaly_flag",
+    ]
     if len(X_test_augmented) > sample_size:
         rng = np.random.default_rng(random_state)
         sample_idx = rng.choice(len(X_test_augmented), size=sample_size, replace=False)

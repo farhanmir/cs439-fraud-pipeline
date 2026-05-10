@@ -16,8 +16,10 @@ from .models import (
     get_hybrid_model_label,
     train_hybrid_xgboost,
     train_logistic_regression,
+    train_xgboost,
 )
 from .plots import (
+    clean_feature_names,
     save_error_analysis_plot,
     save_confusion_matrix_plot,
     save_fallback_explainability_plot,
@@ -95,6 +97,11 @@ def main() -> None:
         prepared.y_train,
         config.random_state,
     )
+    xgboost_only_model = train_xgboost(
+        prepared.X_train_processed,
+        prepared.y_train,
+        config.random_state,
+    )
     hybrid_model = train_hybrid_xgboost(
         hybrid_features.x_train_augmented,
         prepared.y_train,
@@ -108,6 +115,12 @@ def main() -> None:
         prepared.X_test_processed,
         prepared.y_test.to_numpy(),
     )
+    xgboost_only_eval = evaluate_binary_classifier(
+        "XGBoost Only (No IF Features)",
+        xgboost_only_model,
+        prepared.X_test_processed,
+        prepared.y_test.to_numpy(),
+    )
     hybrid_eval = evaluate_binary_classifier(
         hybrid_model_label,
         hybrid_model,
@@ -117,6 +130,7 @@ def main() -> None:
 
     joblib.dump(prepared.preprocessor, models_dir / "preprocessor.joblib")
     joblib.dump(baseline_model, models_dir / "logistic_regression_baseline.joblib")
+    joblib.dump(xgboost_only_model, models_dir / "xgboost_only_no_if.joblib")
     hybrid_model_filename = hybrid_model.__class__.__name__.lower()
     joblib.dump(hybrid_model, models_dir / f"hybrid_{hybrid_model_filename}.joblib")
 
@@ -138,6 +152,14 @@ def main() -> None:
                 "pr_auc": hybrid_eval.pr_auc,
                 "roc_auc": hybrid_eval.roc_auc,
             },
+            {
+                "model": xgboost_only_eval.name,
+                "precision": xgboost_only_eval.precision,
+                "recall": xgboost_only_eval.recall,
+                "f1": xgboost_only_eval.f1,
+                "pr_auc": xgboost_only_eval.pr_auc,
+                "roc_auc": xgboost_only_eval.roc_auc,
+            },
         ]
     )
     metrics_table.to_csv(tables_dir / "model_metrics.csv", index=False)
@@ -158,8 +180,19 @@ def main() -> None:
             "anomaly_flag": hybrid_features.anomaly_flags_test,
         }
     )
+    xgboost_only_predictions = pd.DataFrame(
+        {
+            "true_label": xgboost_only_eval.y_true,
+            "predicted_label": xgboost_only_eval.y_pred,
+            "predicted_probability": xgboost_only_eval.y_score,
+        }
+    )
     baseline_predictions.to_csv(
         predictions_dir / "baseline_test_predictions.csv",
+        index=False,
+    )
+    xgboost_only_predictions.to_csv(
+        predictions_dir / "xgboost_only_no_if_test_predictions.csv",
         index=False,
     )
     hybrid_predictions.to_csv(
@@ -184,7 +217,11 @@ def main() -> None:
 
     feature_importance_df = pd.DataFrame(
         {
-            "feature": [*prepared.feature_names, "anomaly_score", "anomaly_flag"],
+            "feature": [
+                *clean_feature_names(prepared.feature_names),
+                "anomaly_score",
+                "anomaly_flag",
+            ],
             "importance": hybrid_model.feature_importances_,
         }
     ).sort_values("importance", ascending=False)
@@ -206,6 +243,15 @@ def main() -> None:
                 "roc_auc": baseline_eval.roc_auc,
                 "confusion_matrix": baseline_eval.confusion_matrix,
                 "classification_report": baseline_eval.classification_report,
+            },
+            "xgboost_only_no_if": {
+                "precision": xgboost_only_eval.precision,
+                "recall": xgboost_only_eval.recall,
+                "f1": xgboost_only_eval.f1,
+                "pr_auc": xgboost_only_eval.pr_auc,
+                "roc_auc": xgboost_only_eval.roc_auc,
+                "confusion_matrix": xgboost_only_eval.confusion_matrix,
+                "classification_report": xgboost_only_eval.classification_report,
             },
             "hybrid": {
                 "precision": hybrid_eval.precision,

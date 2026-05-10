@@ -45,6 +45,7 @@ except ImportError:
 from fraud_pipeline.config import PipelineConfig
 from fraud_pipeline.data import prepare_data
 from fraud_pipeline.models import build_hybrid_features
+from fraud_pipeline.plots import clean_feature_names
 from fraud_pipeline.utils import to_dense
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -91,7 +92,7 @@ ax.plot(rec_hyb,  prec_hyb,  linewidth=2, color="#D65F5F",
 ax.set_xlabel("Recall", fontsize=12)
 ax.set_ylabel("Precision", fontsize=12)
 ax.set_title("Precision-Recall Curve Comparison", fontsize=13, fontweight="bold")
-ax.legend(fontsize=9, loc="upper right")
+ax.legend(loc="lower left", fontsize=8)
 ax.set_xlim(0, 1)
 ax.set_ylim(0, 1.02)
 fig.tight_layout()
@@ -158,7 +159,11 @@ print("Features and model ready.")
 # ══════════════════════════════════════════════════════════════════════════════
 # Figure 3 — SHAP Summary Plot
 # ══════════════════════════════════════════════════════════════════════════════
-feature_names = [*prepared.feature_names, "anomaly_score", "anomaly_flag"]
+feature_names = [
+    *clean_feature_names(prepared.feature_names),
+    "anomaly_score",
+    "anomaly_flag",
+]
 X_aug = hybrid_feats.x_test_augmented
 
 rng = np.random.default_rng(RANDOM_STATE)
