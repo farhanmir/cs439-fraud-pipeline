@@ -14,8 +14,8 @@ reconstruct the processed test-feature matrix needed for SHAP and PCA.
 
 from __future__ import annotations
 
-import re
 import sys
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -48,7 +48,7 @@ from fraud_pipeline.data import prepare_data
 from fraud_pipeline.models import build_hybrid_features
 from fraud_pipeline.utils import to_dense
 
-# ── Paths ──────────────────────────────────────────────────────────────────
+#  Paths 
 ARTIFACTS   = ROOT / "artifacts"
 MODELS_DIR  = ARTIFACTS / "models"
 PREDS_DIR   = ARTIFACTS / "predictions"
@@ -62,7 +62,7 @@ PCA_SAMPLE   = 5000
 
 plt.style.use("seaborn-v0_8-whitegrid")
 
-# ── Load saved predictions (figures 1 & 2) ─────────────────────────────────
+#  Load saved predictions (figures 1 & 2) 
 baseline_preds = pd.read_csv(PREDS_DIR / "baseline_test_predictions.csv")
 hybrid_preds   = pd.read_csv(PREDS_DIR / "hybrid_test_predictions.csv")
 
@@ -75,9 +75,9 @@ y_score_hyb  = hybrid_preds["predicted_probability"].to_numpy()
 y_pred_hyb   = hybrid_preds["predicted_label"].to_numpy()
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Figure 1 — Precision-Recall Curves
-# ══════════════════════════════════════════════════════════════════════════════
+# 
+# Figure 1  Precision-Recall Curves
+# 
 prec_base, rec_base, _ = precision_recall_curve(y_true_base, y_score_base)
 ap_base = average_precision_score(y_true_base, y_score_base)
 
@@ -101,9 +101,9 @@ plt.close(fig)
 print("Saved: artifacts/figures/pr_curve.png")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Figure 2 — Side-by-side Confusion Matrices
-# ══════════════════════════════════════════════════════════════════════════════
+# 
+# Figure 2  Side-by-side Confusion Matrices
+# 
 cm_base = confusion_matrix(y_true_base, y_pred_base)
 cm_hyb  = confusion_matrix(y_true_hyb,  y_pred_hyb)
 tick_labels = ["Non-Fraud", "Fraud"]
@@ -133,10 +133,10 @@ plt.close(fig)
 print("Saved: artifacts/figures/confusion_matrices.png")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # Reconstruct processed test features (SHAP + PCA need the feature matrix)
-# — prepare_data and build_hybrid_features are deterministic with random_state=42
-# ══════════════════════════════════════════════════════════════════════════════
+#  prepare_data and build_hybrid_features are deterministic with random_state=42
+# 
 print("Preparing features for SHAP and PCA (deterministic, no retraining)...")
 config = PipelineConfig(
     data_path=ROOT / "creditcard.csv",
@@ -156,9 +156,9 @@ hybrid_model = joblib.load(MODELS_DIR / "hybrid_xgbclassifier.joblib")
 print("Features and model ready.")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Figure 3 — SHAP Summary Plot
-# ══════════════════════════════════════════════════════════════════════════════
+# 
+# Figure 3  SHAP Summary Plot
+# 
 feature_names = [*prepared.feature_names, "anomaly_score", "anomaly_flag"]
 feature_names_clean = [
     re.sub(r"^(num__|cat__)", "", name) for name in feature_names
@@ -183,20 +183,20 @@ if HAS_SHAP:
         max_display=15,
         show=False,
     )
-    plt.title("SHAP Feature Contributions — Hybrid XGBoost",
+    plt.title("SHAP Feature Contributions  Hybrid XGBoost",
               fontsize=13, fontweight="bold", pad=14)
     plt.tight_layout()
     plt.savefig(FIGURES_DIR / "shap_summary.png", dpi=150, bbox_inches="tight")
     plt.close()
     print("Saved: artifacts/figures/shap_summary.png")
 else:
-    print("shap not installed — skipping shap_summary.png")
+    print("shap not installed  skipping shap_summary.png")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Figure 4 — PCA Projection of Test Set
+# 
+# Figure 4  PCA Projection of Test Set
 # colour = true label   |   marker = IsolationForest anomaly flag
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 X_train_dense = to_dense(prepared.X_train_processed)
 X_test_dense  = to_dense(prepared.X_test_processed)
 y_test        = prepared.y_test.to_numpy()
@@ -250,9 +250,9 @@ plt.close(fig)
 print("Saved: artifacts/figures/pca_projection.png")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Figure 5 — Top-15 XGBoost Feature Importances (horizontal bar)
-# ══════════════════════════════════════════════════════════════════════════════
+# 
+# Figure 5  Top-15 XGBoost Feature Importances (horizontal bar)
+# 
 fi_df = pd.read_csv(TABLES_DIR / "hybrid_feature_importance.csv")
 top15 = fi_df.head(15).copy()
 top15["feature"] = top15["feature"].str.replace(r"^(num__|cat__)", "", regex=True)
@@ -275,4 +275,5 @@ fig.savefig(FIGURES_DIR / "feature_importance.png", dpi=150, bbox_inches="tight"
 plt.close(fig)
 print("Saved: artifacts/figures/feature_importance.png")
 
-print("\nDone — all figures saved to artifacts/figures/")
+print("\nDone  all figures saved to artifacts/figures/")
+

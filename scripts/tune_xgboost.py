@@ -61,14 +61,6 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    print(
-        "NOTE: This tuning script applies SMOTE oversampling inside each CV fold.\n"
-        "The best hyperparameters are selected under a SMOTE-augmented distribution.\n"
-        "The main pipeline (run_pipeline.py) does NOT use SMOTE — it uses\n"
-        "scale_pos_weight for imbalance correction instead. Hyperparameters\n"
-        "transferred from this script to models.py may behave differently under\n"
-        "the real training distribution."
-    )
     cfg = PipelineConfig(
         data_path=Path(args.data),
         random_state=args.random_state,
@@ -95,14 +87,23 @@ def main() -> None:
             "imblearn is required for SMOTE inside CV; install imbalanced-learn"
         )
 
+    print(
+        "\nNOTE: This tuning script applies SMOTE oversampling inside each "
+        "CV fold.\nHyperparameters are selected under a SMOTE-augmented class "
+        "distribution.\nThe main pipeline (run_pipeline.py) does NOT use "
+        "SMOTE -- it uses scale_pos_weight.\nHyperparameters transferred from "
+        "this script to models.py may behave differently\nunder the real "
+        "training distribution.\n"
+    )
+
     base_clf = XGBClassifier(
         objective="binary:logistic", tree_method="hist", use_label_encoder=False
     )
 
     # SMOTE is applied inside each CV fold here for hyperparameter search only.
     # The final model in models.py does NOT use SMOTE; it uses scale_pos_weight.
-    # This means selected hyperparameters were optimised under a different
-    # class distribution than the one used at inference time.
+    # Hyperparameters were therefore optimised under a different class distribution
+    # than the one used during actual training and inference.
     pipeline = ImbPipeline(
         steps=[
             ("scaler", StandardScaler()),
@@ -148,6 +149,11 @@ def main() -> None:
                 "best_score": float(search.best_score_),
                 "best_params": search.best_params_,
                 "smote_used_in_cv": True,
+                "note": (
+                    "Hyperparameters selected under SMOTE-augmented CV "
+                    "distribution. Main pipeline uses scale_pos_weight, "
+                    "not SMOTE."
+                ),
             },
             indent=2,
         )
